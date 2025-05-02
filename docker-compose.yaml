@@ -1,0 +1,97 @@
+---
+services:
+  consul:
+    image: hashicorp/consul:1.20.6
+    container_name: consul-server-test2
+    volumes:
+      - consul-data:/consul/data
+      - ./consul:/config
+    command: consul agent -server -ui -node=knobo-server -bootstrap-expect=1 -client=0.0.0.0 -bind=0.0.0.0 -config-file=/config/config.hcl -config-dir=/config
+    ports:
+      - "8500:8500"  # Consul HTTP API and UI
+      - "8600:8600/udp" # Consul DNS
+    healthcheck:
+      test: ["CMD", "consul", "info"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    networks: # Consul needs its own network identity
+      - consul-network
+
+  backend-service:
+    build: ./backend
+    container_name: backend-service2
+    environment:
+      - PORT=9191
+    depends_on:
+      - consul
+    networks: # Backend needs its own network identity
+      - consul-network
+
+  backend-service-proxy:
+    image: consul-envoy:latest
+    network_mode: "service:backend-service"
+    cap_add:
+      - ALL
+
+    volumes:
+      - ./consul-config/backend.json:/etc/consul/config/backend.json:ro
+      - ./consul-config/service_defalts_backend.json:/etc/consul/config/service_defalts_backend.json:ro
+    environment:
+        - SERVICE_CONFIG_FILE=backend.json
+        - CONSUL_HTTP_ADDR=http://consul-server-test2:8500
+        - CONSUL_GRPC_ADDR=http://consul-server-test2:8502
+        - ENTRYPOINT_LOG_LEVEL=DEBUG
+        - CENTRAL_CONFIG_FILES=/consul/config/service_defalts_backend.json
+    command: consul connect envoy -sidecar-for backend-service -admin-bind=0.0.0.0:19000  -- --log-level debug
+    depends_on:
+        consul:
+            condition: service_healthy
+
+
+  frontend:
+    build: ./frontend
+    container_name: frontend2
+    environment:
+      - PORT=8000
+      - BACKEND_URL=http://localhost:9191
+    ports:
+      - "8000:8000"
+      - "19000:19000" # Envoy admin port
+    depends_on:
+      - consul
+    networks:
+      - consul-network
+
+  frontend-service-proxy:
+    image: consul-envoy
+    network_mode: "service:frontend"
+    cap_add:
+      - ALL
+
+    environment:
+      - SERVICE_CONFIG_FILE=frontend.json
+      - CONSUL_HTTP_ADDR=http://consul-server-test2:8500
+      - CONSUL_GRPC_ADDR=http://consul-server-test2:8502
+      - ENTRYPOINT_LOG_LEVEL=DEBUG
+      - CENTRAL_CONFIG_FILES=/consul/config/service_defalts_frontend.json
+    volumes:
+      - ./consul-config/frontend.json:/etc/consul/config/frontend.json:ro
+    command: ["consul", "connect", "envoy", "-sidecar-for", "frontend", "-admin-bind=0.0.0.0:19000", "--", "--log-level", "trace"]
+    depends_on:
+      consul:
+        condition: service_healthy # Wait for server to be healthy
+      frontend:
+        condition: service_started # Wait for frontend container start
+
+
+# Backend:
+
+
+
+volumes:
+  consul-data:
+
+networks:
+  consul-network:
+    driver: bridge

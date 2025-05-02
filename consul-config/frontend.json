@@ -1,0 +1,39 @@
+{
+  "domain": "yourdomain.consul",
+  "service": {
+    "name": "frontend",
+    "port": 8000,
+
+    "checks": [
+      {
+        "http": "http://frontend:8000/health",
+        "interval": "10s",
+        "timeout": "2s"
+      }
+    ],
+
+    "connect": {
+      "sidecar_service": {
+        "checks": [
+          {
+            "id": "sidecar_ready",
+            "name": "Frontend Envoy Proxy Ready",
+            "http": "http://frontend:19000/ready",
+            "method": "GET",
+            "interval": "10s",
+            "timeout": "2s"
+          }
+        ],
+        "proxy": {
+          "upstreams": [
+            {
+              "destination_name": "backend-service",
+              "local_bind_port": 9191
+            }
+          ]
+        }
+      }
+    }
+
+  }
+}

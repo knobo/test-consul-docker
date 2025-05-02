@@ -1,0 +1,29 @@
+{
+  "domain": "yourdomain.consul",
+  "service": {
+    "name": "backend-service",
+    "port": 9191,
+    "checks": [
+      {
+        "http": "http://backend-service:9191/health",
+        "interval": "10s",
+        "timeout": "2s"
+      }
+    ],
+    "connect": {
+      "sidecar_service": {
+        "address": "backend-service",
+        "checks": [
+          {
+            "id": "sidecar_ready",
+            "name": "Backend Envoy Proxy Ready",
+            "http": "http://backend-service:19000/ready",
+            "method": "GET",
+            "interval": "10s",
+            "timeout": "2s"
+          }
+        ]
+      }
+    }
+  }
+}
