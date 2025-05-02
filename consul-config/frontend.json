@@ -4,7 +4,6 @@
     "id": "frontend",
     "address": "172.24.0.4",
     "port": 8000,
-
     "checks": [
       {
         "http": "http://frontend:8000/health",

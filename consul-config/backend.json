@@ -11,9 +11,9 @@
         "timeout": "2s"
       }
     ],
+
     "connect": {
       "sidecar_service": {
-        "address": "backend-service",
         "checks": [
           {
             "id": "sidecar_ready",
