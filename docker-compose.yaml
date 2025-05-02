@@ -16,7 +16,8 @@ services:
       timeout: 2s
       retries: 5
     networks: # Consul needs its own network identity
-      - consul-network
+      consul-network:
+        ipv4_address: 172.24.0.2
 
   backend-service:
     build: ./backend
@@ -26,7 +27,8 @@ services:
     depends_on:
       - consul
     networks: # Backend needs its own network identity
-      - consul-network
+      consul-network:
+        ipv4_address: 172.24.0.3
 
   backend-service-proxy:
     image: consul-envoy:latest
@@ -61,7 +63,8 @@ services:
     depends_on:
       - consul
     networks:
-      - consul-network
+      consul-network:
+        ipv4_address: 172.24.0.4
 
   frontend-service-proxy:
     image: consul-envoy
@@ -95,3 +98,8 @@ volumes:
 networks:
   consul-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+
+

@@ -1,7 +1,8 @@
 {
-  "domain": "yourdomain.consul",
   "service": {
     "name": "frontend",
+    "id": "frontend",
+    "address": "172.24.0.4",
     "port": 8000,
 
     "checks": [
@@ -24,11 +25,13 @@
             "timeout": "2s"
           }
         ],
+
         "proxy": {
           "upstreams": [
             {
               "destination_name": "backend-service",
-              "local_bind_port": 9191
+              "local_bind_port": 9191,
+              "local_bind_address": "127.0.0.1"
             }
           ]
         }

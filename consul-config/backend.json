@@ -1,7 +1,8 @@
 {
-  "domain": "yourdomain.consul",
   "service": {
     "name": "backend-service",
+    "id": "backend-service",
+    "address": "172.24.0.3",
     "port": 9191,
     "checks": [
       {

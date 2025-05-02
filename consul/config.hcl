@@ -5,9 +5,6 @@ telemetry {
   disable_hostname = true
 }
 
-domain = "yourdomain.consul"
-
-
 log_level = "TRACE"
 datacenter = "dc1"
 server = true
@@ -17,6 +14,8 @@ ports {
   grpc = 8502
 }
 
+
+advertise_addr = "172.24.0.2"
 
 bind_addr = "0.0.0.0"
 client_addr = "0.0.0.0"
@@ -35,8 +34,10 @@ config_entries {
       kind   = "proxy-defaults"
       name   = "global"
 
+
       config {
-        bind_address = "0.0.0.0"
+      envoy_dns_discovery_type = "STRICT_DNS"
+      bind_address = "0.0.0.0"
         expose = { checks = true }
       }
     }
