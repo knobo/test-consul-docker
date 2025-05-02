@@ -1,0 +1,31 @@
+{
+  "service": {
+    "name": "backend-service",
+    "id": "backend-service2",
+    "address": "172.24.0.5",
+
+    "port": 9191,
+    "checks": [
+      {
+        "http": "http://backend-service-2:9191/health",
+        "interval": "10s",
+        "timeout": "2s"
+      }
+    ],
+
+    "connect": {
+      "sidecar_service": {
+        "checks": [
+          {
+            "id": "sidecar_ready",
+            "name": "Backend Envoy Proxy Ready",
+            "http": "http://backend-service-2:19000/ready",
+            "method": "GET",
+            "interval": "10s",
+            "timeout": "2s"
+          }
+        ]
+      }
+    }
+  }
+}

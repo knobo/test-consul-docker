@@ -50,6 +50,35 @@ services:
         consul:
             condition: service_healthy
 
+  backend-service-2:
+    build: ./backend
+    container_name: backend-service3
+    environment:
+      - PORT=9191
+    depends_on:
+      - consul
+    networks:
+      consul-network:
+        ipv4_address: 172.24.0.5
+
+  backend-service-2-proxy:
+    image: consul-envoy:latest
+    network_mode: "service:backend-service-2"
+    cap_add:
+      - ALL
+    volumes:
+      - ./consul-config/backend3.json:/etc/consul/config/backend.json:ro
+      - ./consul-config/service_defalts_backend.json:/etc/consul/config/service_defalts_backend.json:ro
+    environment:
+      - SERVICE_CONFIG_FILE=backend.json
+      - CONSUL_HTTP_ADDR=http://consul-server-test2:8500
+      - CONSUL_GRPC_ADDR=http://consul-server-test2:8502
+      - ENTRYPOINT_LOG_LEVEL=DEBUG
+      - CENTRAL_CONFIG_FILES=/consul/config/service_defalts_backend.json
+    command: consul connect envoy -sidecar-for backend-service2 -admin-bind=0.0.0.0:19000  -- --log-level debug
+    depends_on:
+      consul:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
